@@ -1,6 +1,14 @@
 <script lang="ts">
+  import { Route, router } from 'svelte-micro'
+  import Home from './routes/Home.svelte'
 </script>
 
-<main>
-  <h1>Monopolium</h1>
-</main>
+<Route>
+  <Route path="/">
+    <Home />
+  </Route>
+
+  <Route fallback>
+    {router.replace('/')}
+  </Route>
+</Route>
