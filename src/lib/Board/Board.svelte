@@ -1,31 +1,34 @@
 <script lang="ts">
-  import { tiles } from './tile'
+  import { defaultTiles } from './tile'
   import Tile from './Tile.svelte'
 </script>
 
-<div class="container">
-  <div class="board">
-    {#each tiles as tile (tile.id)}
+<div class="board">
+  <div class="grid">
+    {#each defaultTiles as tile (tile.id)}
       <Tile {tile} />
     {/each}
   </div>
 </div>
 
 <style>
-  .container {
+  .board {
     display: flex;
     justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
   }
 
-  .board {
+  .grid {
     display: grid;
 
-    height: 100vh;
+    height: min(100vw, 100vh);
     aspect-ratio: 1/1;
 
     grid-template-columns: 2.5fr repeat(9, 1fr) 2.5fr;
     grid-template-rows: 2.5fr repeat(9, 1fr) 2.5fr;
-    gap: 1px;
+    gap: 2px;
     grid-template-areas:
       't0  t1  t2  t3  t4  t5  t6  t7  t8  t9  t10'
       't39 c   c   c   c   c   c   c   c   c   t11'

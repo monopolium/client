@@ -1,36 +1,58 @@
-interface GenericTile {
-  id: number
-  type: string
-}
+import { writable } from 'svelte/store'
 
-interface BaseTile extends GenericTile {
+interface BaseTile {
+  id: number
   type: 'start' | 'jail' | 'jackpot' | 'arrest' | 'chance' | 'bank'
 }
 
-interface CompanyTile extends GenericTile {
+interface CompanyTile {
+  id: number
   type: 'company'
-  name: string
   group: 'green' | 'cyan' | 'blue' | 'purple' | 'pink' | 'red' | 'orange' | 'yellow'
-  value: number
-}
-
-interface AutomotiveTile extends GenericTile {
-  type: 'automotive'
   name: string
-  group: 'darkred'
-  value: number
+  price: number
+  upgradePrice: number
+  baseIncome: number
+  collectionIncome: number
+  levelIncome: {
+    1: number
+    2: number
+    3: number
+    4: number
+    5: number
+  }
 }
 
-interface ServiceTile extends GenericTile {
+interface AutomotiveTile {
+  id: number
+  type: 'automotive'
+  group: 'darkred'
+  name: string
+  price: number
+  quantityIncome: {
+    1: number
+    2: number
+    3: number
+    4: number
+  }
+}
+
+interface ServiceTile {
+  id: number
   type: 'service'
   name: string
   group: 'darkpurple'
-  value: number
+  price: number
+  stepIncome: number
+  quantityMultiplier: {
+    1: number
+    2: number
+  }
 }
 
 export type Tile = BaseTile | CompanyTile | AutomotiveTile | ServiceTile
 
-export const tiles: Tile[] = [
+export const defaultTiles: Tile[] = [
   {
     id: 0,
     type: 'start',
@@ -40,7 +62,7 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'green',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 2,
@@ -51,7 +73,7 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'green',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 4,
@@ -62,14 +84,14 @@ export const tiles: Tile[] = [
     type: 'automotive',
     name: 'todo',
     group: 'darkred',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 6,
     type: 'company',
     name: 'todo',
     group: 'cyan',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 7,
@@ -80,14 +102,14 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'cyan',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 9,
     type: 'company',
     name: 'todo',
     group: 'cyan',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 10,
@@ -98,42 +120,42 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'blue',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 12,
     type: 'service',
     name: 'todo',
     group: 'darkpurple',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 13,
     type: 'company',
     name: 'todo',
     group: 'blue',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 14,
     type: 'company',
     name: 'todo',
     group: 'blue',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 15,
     type: 'automotive',
     name: 'todo',
     group: 'darkred',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 16,
     type: 'company',
     name: 'todo',
     group: 'purple',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 17,
@@ -144,14 +166,14 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'purple',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 19,
     type: 'company',
     name: 'todo',
     group: 'purple',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 20,
@@ -162,7 +184,7 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'pink',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 22,
@@ -173,49 +195,49 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'pink',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 24,
     type: 'company',
     name: 'todo',
     group: 'pink',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 25,
     type: 'automotive',
     name: 'todo',
     group: 'darkred',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 26,
     type: 'company',
     name: 'todo',
     group: 'red',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 27,
     type: 'service',
     name: 'todo',
     group: 'darkpurple',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 28,
     type: 'company',
     name: 'todo',
     group: 'red',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 29,
     type: 'company',
     name: 'todo',
     group: 'red',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 30,
@@ -226,14 +248,14 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'orange',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 32,
     type: 'company',
     name: 'todo',
     group: 'orange',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 33,
@@ -244,14 +266,14 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'orange',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 35,
     type: 'automotive',
     name: 'todo',
     group: 'darkred',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 36,
@@ -262,7 +284,7 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'orange',
-    value: 1000,
+    price: 1000,
   },
   {
     id: 38,
@@ -273,6 +295,16 @@ export const tiles: Tile[] = [
     type: 'company',
     name: 'todo',
     group: 'orange',
-    value: 1000,
+    price: 1000,
   },
 ]
+
+const createBoard = (tiles: Tile[]) => {
+  const { subscribe, set } = writable(tiles)
+
+  return {
+    subscribe,
+  }
+}
+
+const board = createBoard(defaultTiles)

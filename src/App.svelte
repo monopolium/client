@@ -1,4 +1,5 @@
 <script lang="ts">
+  import './styles/main.css'
   import { Route, router } from 'svelte-micro'
   import Home from './routes/Home.svelte'
   import Game from './routes/Game.svelte'
