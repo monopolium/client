@@ -9,7 +9,9 @@
   const socket = createReopenableSocketStore()
   const { message, state } = socket
 
-  getToken('http://localhost:7654/token').then((token) => socket.open('ws://localhost:7654/ws/' + token))
+  getToken('http://localhost:7654/token').then((token) =>
+    socket.open('ws://localhost:7654/ws/' + token)
+  )
 
   message.subscribe((data) => console.log(data))
   state.subscribe((state) => console.log('WebSocket state: ' + state))

@@ -16,7 +16,8 @@ export const createSocketStore: CreateSocketStore = (initialValue = null) => {
   const message = writable<any>(initialValue)
 
   const open: SocketStore['open'] = (url, protocols) => {
-    if (get(state) !== WebSocket.CLOSED) return new Error("SocketError: can't open socket - existing socket is not closed")
+    if (get(state) !== WebSocket.CLOSED)
+      return new Error("SocketError: can't open socket - existing socket is not closed")
 
     state.set(WebSocket.CONNECTING)
     socket = new WebSocket(url, protocols)
@@ -49,7 +50,10 @@ export const createSocketStore: CreateSocketStore = (initialValue = null) => {
 
 type CreateReopenableSocketStore = (initialValue?: any, reopenTimeout?: number) => SocketStore
 
-export const createReopenableSocketStore: CreateReopenableSocketStore = (initialValue = null, reopenTimeout = 2000) => {
+export const createReopenableSocketStore: CreateReopenableSocketStore = (
+  initialValue = null,
+  reopenTimeout = 2000
+) => {
   const { state, message, open: _open, close: _close, send } = createSocketStore(initialValue)
   let manuallyClosed = true
   let reopenTimeoutID: number | null = null
