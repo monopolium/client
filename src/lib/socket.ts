@@ -1,9 +1,9 @@
-import { type Readable, writable, readonly } from 'svelte/store'
+import { type Readable, writable, readonly, get } from 'svelte/store'
 
 export type SocketStore = {
   state: Readable<any>
   message: Readable<WebSocket['readyState']>
-  open: (url: string | URL, protocols?: string | string[] | undefined) => void
+  open: (url: string | URL, protocols?: string | string[] | undefined) => void | Error
   close: (code?: number | undefined, reason?: string | undefined) => void
   send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => void
 }
@@ -16,6 +16,8 @@ export const createSocketStore: CreateSocketStore = (initialValue = null) => {
   const message = writable<any>(initialValue)
 
   const open: SocketStore['open'] = (url, protocols) => {
+    if (get(state) !== WebSocket.CLOSED) return new Error("SocketError: can't open socket - existing socket is not closed")
+
     state.set(WebSocket.CONNECTING)
     socket = new WebSocket(url, protocols)
     socket.onopen = () => state.set(WebSocket.OPEN)
@@ -65,9 +67,11 @@ export const createReopenableSocketStore: CreateReopenableSocketStore = (initial
   }
 
   const open: SocketStore['open'] = (url, protocols) => {
+    const result = _open(url, protocols)
+    if (result !== undefined) return result
+
     manuallyClosed = false
     clearReopenTimeout()
-    _open(url, protocols)
 
     const stateUnsubscribe = state.subscribe((value) => {
       if (value === WebSocket.CLOSED) {
@@ -78,9 +82,9 @@ export const createReopenableSocketStore: CreateReopenableSocketStore = (initial
   }
 
   const close: SocketStore['close'] = (code, reason) => {
+    _close(code, reason)
     manuallyClosed = true
     clearReopenTimeout()
-    _close(code, reason)
   }
 
   return { state, message, open, close, send }
