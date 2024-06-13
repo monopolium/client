@@ -1,95 +1,84 @@
 import { type Readable, writable, readonly, get } from 'svelte/store'
 
-export type SocketStore = {
-  state: Readable<any>
-  message: Readable<WebSocket['readyState']>
+export type SocketStore<T> = {
+  state: Readable<WebSocket['readyState']>
+  message: Readable<T | undefined>
   open: (url: string | URL, protocols?: string | string[] | undefined) => void | Error
   close: (code?: number | undefined, reason?: string | undefined) => void
   send: (data: string | ArrayBufferLike | Blob | ArrayBufferView) => void
 }
 
-type CreateSocketStore = (initialValue?: any) => SocketStore
-
-export const createSocketStore: CreateSocketStore = (initialValue = null) => {
+export const createSocketStore = <T>(value?: T | undefined): SocketStore<T> => {
   let socket: WebSocket | null = null
   const state = writable<WebSocket['readyState']>(WebSocket.CLOSED)
-  const message = writable<any>(initialValue)
-
-  const open: SocketStore['open'] = (url, protocols) => {
-    if (get(state) !== WebSocket.CLOSED)
-      return new Error("SocketError: can't open socket - existing socket is not closed")
-
-    state.set(WebSocket.CONNECTING)
-    socket = new WebSocket(url, protocols)
-    socket.onopen = () => state.set(WebSocket.OPEN)
-    socket.onclose = () => state.set(WebSocket.CLOSED)
-    socket.onmessage = (event) => message.set(event.data)
-  }
-
-  const close: SocketStore['close'] = (code, reason) => {
-    socket?.close(code, reason)
-  }
-
-  const send: SocketStore['send'] = (data) => {
-    const stateUnsubscribe = state.subscribe((value) => {
-      if (value === WebSocket.OPEN) {
-        socket?.send(data)
-        queueMicrotask(() => stateUnsubscribe())
-      }
-    })
-  }
+  const message = writable<T>(value)
 
   return {
     state: readonly(state),
     message: readonly(message),
-    open,
-    close,
-    send,
+
+    open: (url, protocols) => {
+      if (get(state) !== WebSocket.CLOSED) return new Error('socket is not closed')
+      state.set(WebSocket.CONNECTING)
+      socket = new WebSocket(url, protocols)
+      socket.onopen = () => state.set(WebSocket.OPEN)
+      socket.onclose = () => state.set(WebSocket.CLOSED)
+      socket.onmessage = (event) => message.set(event.data as T)
+    },
+
+    close: (code, reason) => {
+      state.set(WebSocket.CLOSING)
+      socket?.close(code, reason)
+    },
+
+    send: (data) => {
+      const stateUnsubscribe = state.subscribe((value) => {
+        if (value !== WebSocket.OPEN) return
+        socket?.send(data)
+        queueMicrotask(() => stateUnsubscribe())
+      })
+    },
   }
 }
 
-type CreateReopenableSocketStore = (initialValue?: any, reopenTimeout?: number) => SocketStore
-
-export const createReopenableSocketStore: CreateReopenableSocketStore = (
-  initialValue = null,
-  reopenTimeout = 2000
-) => {
-  const { state, message, open: _open, close: _close, send } = createSocketStore(initialValue)
-  let manuallyClosed = true
-  let reopenTimeoutID: number | null = null
+export const reopenable = <T>(socket: SocketStore<T>, timeout = 3000): SocketStore<T> => {
+  let isManuallyClosed: boolean = true
+  let timeoutId: number | null = null
 
   const clearReopenTimeout = () => {
-    if (reopenTimeoutID !== null) {
-      clearTimeout(reopenTimeoutID)
-      reopenTimeoutID = null
-    }
+    if (timeoutId === null) return
+    clearTimeout(timeoutId)
+    timeoutId = null
   }
 
-  const setReopenTimeout = (callback: SocketStore['open'], timeout: number) => {
+  const setReopenTimeout = (callback: SocketStore<T>['open'], timeout: number) => {
     clearReopenTimeout()
-    reopenTimeoutID = setTimeout(callback, timeout)
+    timeoutId = setTimeout(callback, timeout)
   }
 
-  const open: SocketStore['open'] = (url, protocols) => {
-    const result = _open(url, protocols)
-    if (result !== undefined) return result
-
-    manuallyClosed = false
+  const open: SocketStore<T>['open'] = (url, protocols) => {
+    isManuallyClosed = false
     clearReopenTimeout()
+    socket.open(url, protocols)
 
-    const stateUnsubscribe = state.subscribe((value) => {
-      if (value === WebSocket.CLOSED) {
-        if (!manuallyClosed) setReopenTimeout(() => open(url, protocols), reopenTimeout)
-        queueMicrotask(() => stateUnsubscribe())
-      }
+    const stateUnsubscribe = socket.state.subscribe((value) => {
+      if (value !== WebSocket.CLOSED) return
+      if (!isManuallyClosed) setReopenTimeout(() => open(url, protocols), timeout)
+      queueMicrotask(() => stateUnsubscribe())
     })
   }
 
-  const close: SocketStore['close'] = (code, reason) => {
-    _close(code, reason)
-    manuallyClosed = true
+  const close: SocketStore<T>['close'] = (code, reason) => {
+    isManuallyClosed = true
     clearReopenTimeout()
+    socket.close(code, reason)
   }
 
-  return { state, message, open, close, send }
+  return {
+    state: socket.state,
+    message: socket.message,
+    open: open,
+    close: close,
+    send: socket.send,
+  }
 }

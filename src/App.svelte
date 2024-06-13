@@ -4,19 +4,23 @@
   import Home from './routes/Home.svelte'
   import Game from './routes/Game.svelte'
   import { getToken } from './lib/token'
-  import { createReopenableSocketStore } from './lib/socket'
+  import { createSocketStore, reopenable } from './lib/socket'
 
-  const socket = createReopenableSocketStore()
-  const { message, state } = socket
+  const socket = reopenable(createSocketStore())
 
-  getToken('http://localhost:7654/token').then((token) =>
+  getToken('http://localhost:7654/token').then((token) => {
     socket.open('ws://localhost:7654/ws/' + token)
-  )
+  })
 
-  message.subscribe((data) => console.log(data))
-  state.subscribe((state) => console.log('WebSocket state: ' + state))
-  // Debug
-  ;(window as typeof globalThis & { socket?: any }).socket = socket
+  socket.state.subscribe((state) => console.log('Socket state: ' + state))
+  socket.message.subscribe((data) => console.log(data))
+
+  // debug
+  const _applySocketToWindow = (socket: any) => {
+    ;(window as Window & { socket?: any }).socket = socket
+  }
+
+  _applySocketToWindow(socket)
 </script>
 
 <Route>
